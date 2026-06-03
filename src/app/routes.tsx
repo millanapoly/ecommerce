@@ -14,36 +14,41 @@ import { About } from './pages/About';
 import { Delivery } from './pages/Delivery';
 import { LoyaltyProgram } from './pages/LoyaltyProgram';
 
-export const router = createBrowserRouter([
+export const router = createBrowserRouter(
+  [
+    {
+      path: '/',
+      Component: RootLayout,
+      children: [
+        {
+          path: '/',
+          Component: Layout,
+          children: [
+            { index: true, element: <Navigate to="home" replace /> },
+            { path: 'home', Component: Home },
+            { path: 'catalog', Component: Catalog },
+            { path: 'product/:id', Component: ProductDetail },
+            { path: 'cart', Component: Cart },
+            { path: 'checkout', Component: Checkout },
+            { path: 'order-success/:orderNumber', Component: OrderSuccess },
+            { path: 'account', Component: Account },
+            { path: 'loyalty', Component: LoyaltyProgram },
+            { path: 'about', Component: About },
+            { path: 'delivery', Component: Delivery },
+          ],
+        },
+        {
+          path: '/login',
+          Component: Login,
+        },
+        {
+          path: '/register',
+          Component: Register,
+        },
+      ],
+    },
+  ],
   {
-    path: '/',
-    Component: RootLayout,
-    children: [
-      {
-        path: '/',
-        Component: Layout,
-        children: [
-          { index: true, element: <Navigate to="/home" replace /> },
-          { path: 'home', Component: Home },
-          { path: 'catalog', Component: Catalog },
-          { path: 'product/:id', Component: ProductDetail },
-          { path: 'cart', Component: Cart },
-          { path: 'checkout', Component: Checkout },
-          { path: 'order-success/:orderNumber', Component: OrderSuccess },
-          { path: 'account', Component: Account },
-          { path: 'loyalty', Component: LoyaltyProgram },
-          { path: 'about', Component: About },
-          { path: 'delivery', Component: Delivery }
-        ]
-      },
-      {
-        path: '/login',
-        Component: Login
-      },
-      {
-        path: '/register',
-        Component: Register
-      }
-    ]
+    basename: '/ecommerce',
   }
-]);
+);
