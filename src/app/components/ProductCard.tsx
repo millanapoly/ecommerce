@@ -1,6 +1,7 @@
 import { Link, useNavigate } from 'react-router';
 import { Product } from '../data/products';
 import { useCart } from '../contexts/CartContext';
+import { useAuth } from '../contexts/AuthContext';
 import { ShoppingCart } from 'lucide-react';
 import { getPromotionForProduct } from '../data/promotions';
 
@@ -12,8 +13,9 @@ interface ProductCardProps {
 export function ProductCard({ product, view = 'grid' }: ProductCardProps) {
   const { addToCart } = useCart();
   const navigate = useNavigate();
+  const { isAuthenticated } = useAuth();
 
-  const promotion = product.promotionId ? getPromotionForProduct(product.id) : undefined;
+  const promotion = isAuthenticated && product.promotionId ? getPromotionForProduct(product.id) : undefined;
 
   const handleAddToCart = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -51,11 +53,6 @@ export function ProductCard({ product, view = 'grid' }: ProductCardProps) {
 
           {/* Бейджи */}
           <div className="absolute top-2 left-2 flex flex-col gap-1">
-            {product.isNew && (
-              <span className="px-2 py-0.5 bg-green-500 text-white text-xs font-medium rounded">
-                Новинка
-              </span>
-            )}
             {promotion && (
               <span className="px-2 py-0.5 bg-orange-500 text-white text-xs font-medium rounded">
                 Акция {promotion.badge}
@@ -128,11 +125,6 @@ export function ProductCard({ product, view = 'grid' }: ProductCardProps) {
 
         {/* Бейджи */}
         <div className="absolute top-3 left-3 flex flex-col gap-2">
-          {product.isNew && (
-            <span className="px-3 py-1 bg-green-500 text-white text-xs font-medium rounded">
-              Новинка
-            </span>
-          )}
           {promotion && (
             <span className="px-3 py-1 bg-orange-500 text-white text-xs font-medium rounded">
               Акция {promotion.badge}
@@ -175,7 +167,8 @@ export function ProductCard({ product, view = 'grid' }: ProductCardProps) {
             }}
             className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-[#0066FF] text-white rounded-lg hover:bg-[#0052CC] transition-colors"
           >
-            Выбрать вариант
+            <ShoppingCart className="w-4 h-4" />
+            В корзину
           </button>
         ) : (
           <button

@@ -12,10 +12,8 @@ export function Layout() {
         <div className="max-w-7xl mx-auto px-4 py-8">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
             <div>
-              <h3 className="font-semibold mb-4">ProfiSfera × Tokuyama Dental</h3>
-              <p className="text-sm text-muted-foreground">
-                Официальные материалы Tokuyama Dental для стоматологических клиник
-              </p>
+              <h3 className="font-semibold mb-4">ProfiSfera</h3>
+              <p className="text-sm text-muted-foreground">Официальные материалы Tokuyama Dental для стоматологических клиник</p>
             </div>
             <div>
               <h3 className="font-semibold mb-4">Контакты</h3>

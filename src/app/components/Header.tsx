@@ -31,7 +31,7 @@ export function Header() {
           <Link to="/home" className="flex items-center gap-2 shrink-0">
             <div className="text-xl font-semibold">
               <span className="text-[#0066FF]">PROFISFERA</span>
-              <span className="text-sm text-muted-foreground block">× Tokuyama Dental</span>
+              
             </div>
           </Link>
 
