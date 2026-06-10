@@ -14,6 +14,7 @@ export interface Promotion {
   minQuantity: number;
   giftProductId: string;
   giftProductName: string;
+  giftProductPrice: number;
   giftQuantity: number;
   badge: string;
   description: string;
