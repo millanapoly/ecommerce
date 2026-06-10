@@ -13,22 +13,26 @@ export function OrderSuccess() {
         </div>
 
         <div className="bg-white border border-border rounded-lg p-8 mb-6">
-          <p className="text-lg mb-6">
-            Ваш заказ №<strong>{orderNumber}</strong> передан официальному поставщику Tokuyama Dental.
+          <p className="text-lg mb-6">Заказ №<strong>{orderNumber}</strong> создан и передан официальным дистрибьюторам по территории доставки. Дистрибьютор свяжется с вами в течение 2 часов в рабочее время для подтверждения деталей, оплаты и доставки.
           </p>
 
-          <div className="space-y-4 text-muted-foreground">
-            <p>
-              Поставщик примет заказ в обработку и свяжется с вами в ближайшее рабочее время, чтобы подтвердить детали заказа, оплату и доставку.
-            </p>
-
-            <p>
-              Ориентировочный срок доставки — от 1 дня.
-            </p>
-
-            <p>
-              Статус заказа можно отслеживать в личном кабинете.
-            </p>
+          <div className="space-y-3">
+            <div className="flex items-start gap-3">
+              <div className="w-6 h-6 rounded-full bg-green-500 text-white flex items-center justify-center shrink-0 text-sm font-semibold">1</div>
+              <p className="text-muted-foreground pt-0.5">Заказ создан</p>
+            </div>
+            <div className="flex items-start gap-3">
+              <div className="w-6 h-6 rounded-full bg-green-500 text-white flex items-center justify-center shrink-0 text-sm font-semibold">2</div>
+              <p className="text-muted-foreground pt-0.5">Заказ передан официальному дистрибьютору</p>
+            </div>
+            <div className="flex items-start gap-3">
+              <div className="w-6 h-6 rounded-full bg-blue-200 text-blue-700 flex items-center justify-center shrink-0 text-sm font-semibold">3</div>
+              <p className="text-muted-foreground pt-0.5">Дистрибьютор свяжется с вами в течение 2 часов в рабочее время</p>
+            </div>
+            <div className="flex items-start gap-3">
+              <div className="w-6 h-6 rounded-full bg-blue-200 text-blue-700 flex items-center justify-center shrink-0 text-sm font-semibold">4</div>
+              <p className="text-muted-foreground pt-0.5">Вы согласуете оплату и доставку</p>
+            </div>
           </div>
         </div>
 

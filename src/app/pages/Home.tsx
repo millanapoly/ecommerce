@@ -2,17 +2,17 @@ import { Link } from 'react-router';
 import { useState } from 'react';
 import { ProductCard } from '../components/ProductCard';
 import { products } from '../data/products';
+import { useAuth } from '../contexts/AuthContext';
 
 export function Home() {
-  const [activeTab, setActiveTab] = useState<'popular' | 'new' | 'promotions'>('popular');
+  const { isAuthenticated } = useAuth();
+  const [activeTab, setActiveTab] = useState<'popular' | 'promotions'>('popular');
 
   const popularProducts = products.slice(0, 5);
-  const newProducts = products.filter(p => p.isNew);
   const promotionProducts = products.filter(p => p.promotionId);
 
   const displayedProducts =
     activeTab === 'popular' ? popularProducts :
-    activeTab === 'new' ? newProducts :
     promotionProducts;
 
   return (
@@ -40,6 +40,17 @@ Tokuyama у официальных поставщиков — быстро и б
 
       {/* Товарные подборки с табами */}
       <div className="max-w-7xl mx-auto px-4 py-16">
+        {/* Информационный баннер для неавторизованных */}
+        {!isAuthenticated && (
+          <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg flex items-center gap-3">
+            <span className="text-blue-600 text-lg">🔒</span>
+            <p className="text-blue-700">
+              <Link to="/login" className="font-medium underline hover:no-underline">Войдите</Link>
+              , чтобы увидеть персональные условия
+            </p>
+          </div>
+        )}
+
         {/* Табы */}
         <div className="flex gap-6 mb-8 border-b border-border">
           <button
@@ -52,26 +63,18 @@ Tokuyama у официальных поставщиков — быстро и б
           >
             <span className="text-xl font-semibold">Популярные</span>
           </button>
-          <button
-            onClick={() => setActiveTab('new')}
-            className={`pb-4 px-2 border-b-2 transition-colors ${
-              activeTab === 'new'
-                ? 'border-[#0066FF] text-primary'
-                : 'border-transparent text-muted-foreground hover:text-primary'
-            }`}
-          >
-            <span className="text-xl font-semibold">Новинки</span>
-          </button>
-          <button
-            onClick={() => setActiveTab('promotions')}
-            className={`pb-4 px-2 border-b-2 transition-colors ${
-              activeTab === 'promotions'
-                ? 'border-[#0066FF] text-primary'
-                : 'border-transparent text-muted-foreground hover:text-primary'
-            }`}
-          >
-            <span className="text-xl font-semibold">Акции</span>
-          </button>
+          {isAuthenticated && (
+            <button
+              onClick={() => setActiveTab('promotions')}
+              className={`pb-4 px-2 border-b-2 transition-colors ${
+                activeTab === 'promotions'
+                  ? 'border-[#0066FF] text-primary'
+                  : 'border-transparent text-muted-foreground hover:text-primary'
+              }`}
+            >
+              <span className="text-xl font-semibold">Акции</span>
+            </button>
+          )}
         </div>
 
         {/* Товары */}

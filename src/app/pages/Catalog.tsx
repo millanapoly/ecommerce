@@ -31,10 +31,8 @@ export function Catalog() {
 
   const sortOptions = [
     { value: 'popular', label: 'Популярные' },
-    { value: 'new', label: 'Новинки' },
-    { value: 'price-asc', label: 'Дешёвые' },
-    { value: 'price-desc', label: 'Дорогие' },
-    { value: 'promotions', label: 'Товары по акции' }
+    { value: 'price-asc', label: 'Цена по возрастанию' },
+    { value: 'price-desc', label: 'Цена по убыванию' },
   ];
 
   const getSortLabel = () => {
@@ -156,22 +154,13 @@ export function Catalog() {
 
     // Фильтрация и сортировка
     switch (sortBy) {
-      case 'new':
-        // Показать только новинки
-        filtered = filtered.filter(p => p.isNew);
-        break;
       case 'popular':
-        // Оставить в порядке по умолчанию (первые товары - популярные)
         break;
       case 'price-asc':
         filtered.sort((a, b) => a.price - b.price);
         break;
       case 'price-desc':
         filtered.sort((a, b) => b.price - a.price);
-        break;
-      case 'promotions':
-        // Показать только акционные товары
-        filtered = filtered.filter(p => p.promotionId);
         break;
     }
 

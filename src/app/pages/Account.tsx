@@ -34,7 +34,7 @@ export function Account() {
 
   const handleLogout = () => {
     logout();
-    navigate('/home');
+    navigate('/');
   };
 
   const statusLabels: Record<string, string> = {

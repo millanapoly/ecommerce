@@ -1,12 +1,47 @@
 import { Link } from 'react-router';
+import { useState } from 'react';
 import { useCart } from '../contexts/CartContext';
-import { Trash2, ShoppingBag, Gift } from 'lucide-react';
+import { useAuth } from '../contexts/AuthContext';
+import { Trash2, ShoppingBag, Gift, Tag, X } from 'lucide-react';
 
 export function Cart() {
-  const { items, removeFromCart, updateQuantity, getTotalItems, getTotalPrice } = useCart();
+  const { items, removeFromCart, updateQuantity, appliedPromo, applyPromo, removePromo, getPromoDiscount } = useCart();
+  const { isAuthenticated } = useAuth();
 
-  const totalItems = getTotalItems();
-  const totalPrice = getTotalPrice();
+  const [promoInput, setPromoInput] = useState('');
+  const [promoStatus, setPromoStatus] = useState<'idle' | 'success' | 'error'>('idle');
+
+  const nonGiftItems = items.filter(item => !item.isGift);
+  const giftItems = items.filter(item => item.isGift);
+
+  const totalItems = isAuthenticated
+    ? items.reduce((s, i) => s + i.quantity, 0)
+    : nonGiftItems.reduce((s, i) => s + i.quantity, 0);
+
+  const basePrice = nonGiftItems.reduce((s, i) => s + i.product.price * i.quantity, 0);
+  const giftSavings = isAuthenticated
+    ? giftItems.reduce((s, i) => s + i.product.price * i.quantity, 0)
+    : 0;
+
+  const promoDiscount = getPromoDiscount();
+  const totalSavings = giftSavings + promoDiscount;
+  const finalPrice = basePrice - promoDiscount;
+
+  const handleApplyPromo = () => {
+    const ok = applyPromo(promoInput);
+    setPromoStatus(ok ? 'success' : 'error');
+  };
+
+  const handleRemovePromo = () => {
+    removePromo();
+    setPromoInput('');
+    setPromoStatus('idle');
+  };
+
+  const handlePromoInputChange = (value: string) => {
+    setPromoInput(value);
+    if (promoStatus !== 'idle') setPromoStatus('idle');
+  };
 
   if (items.length === 0) {
     return (
@@ -30,6 +65,8 @@ export function Cart() {
     );
   }
 
+  const displayItems = isAuthenticated ? items : nonGiftItems;
+
   return (
     <div className="min-h-screen bg-background">
       <div className="max-w-7xl mx-auto px-4 py-8">
@@ -38,12 +75,21 @@ export function Cart() {
           В корзине: {totalItems} {totalItems === 1 ? 'товар' : 'товаров'}
         </p>
 
+        {!isAuthenticated && (
+          <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg flex items-center gap-3">
+            <span className="text-blue-600 text-lg">🔒</span>
+            <p className="text-blue-700">
+              <Link to="/login" className="font-medium underline hover:no-underline">Войдите</Link>
+              , чтобы увидеть персональные условия
+            </p>
+          </div>
+        )}
+
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Список товаров */}
           <div className="lg:col-span-2 space-y-4">
-            {items.map((item) => {
-              const { product, quantity, isGift, relatedPromoId } = item;
-
+            {displayItems.map((item) => {
+              const { product, quantity, isGift } = item;
               return (
                 <div
                   key={product.id}
@@ -72,9 +118,7 @@ export function Cart() {
                     <div className="text-sm text-muted-foreground mb-1">{product.brand}</div>
                     {!isGift && <div className="text-sm text-muted-foreground">Арт. {product.article}</div>}
                     {isGift && (
-                      <p className="text-sm text-green-700 mt-2">
-                        Подарок добавлен автоматически по акции
-                      </p>
+                      <p className="text-sm text-green-700 mt-2">Подарок добавлен автоматически по акции</p>
                     )}
                   </div>
 
@@ -90,7 +134,7 @@ export function Cart() {
                     )}
 
                     <div className="text-xl font-semibold">
-                      {product.price.toLocaleString('ru-RU')} ₽
+                      {isGift ? 'Бесплатно' : `${product.price.toLocaleString('ru-RU')} ₽`}
                     </div>
 
                     {!isGift ? (
@@ -110,14 +154,14 @@ export function Cart() {
                         </button>
                       </div>
                     ) : (
-                      <div className="text-sm text-muted-foreground">
-                        Количество: {quantity}
-                      </div>
+                      <div className="text-sm text-muted-foreground">Количество: {quantity}</div>
                     )}
 
-                    <div className="text-lg font-medium">
-                      {(product.price * quantity).toLocaleString('ru-RU')} ₽
-                    </div>
+                    {!isGift && (
+                      <div className="text-lg font-medium">
+                        {(product.price * quantity).toLocaleString('ru-RU')} ₽
+                      </div>
+                    )}
                   </div>
                 </div>
               );
@@ -126,31 +170,96 @@ export function Cart() {
 
           {/* Итоговый блок */}
           <div className="lg:col-span-1">
-            <div className="bg-white border border-border rounded-lg p-6 sticky top-24">
-              <h2 className="text-xl font-semibold mb-6">Итого</h2>
+            <div className="bg-white border border-border rounded-lg p-6 sticky top-24 space-y-6">
+              <h2 className="text-xl font-semibold">Итого</h2>
 
-              <div className="space-y-3 mb-6 pb-6 border-b border-border">
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Товары ({totalItems})</span>
-                  <span className="font-medium">{totalPrice.toLocaleString('ru-RU')} ₽</span>
+              {/* Промокод */}
+              {isAuthenticated && (
+                <div>
+                  {appliedPromo ? (
+                    <div className="flex items-center justify-between p-3 bg-green-50 border border-green-200 rounded-lg">
+                      <div className="flex items-center gap-2">
+                        <Tag className="w-4 h-4 text-green-600" />
+                        <span className="text-sm font-medium text-green-700">{appliedPromo.code}</span>
+                        <span className="text-sm text-green-600">−{appliedPromo.label}</span>
+                      </div>
+                      <button onClick={handleRemovePromo} className="text-green-600 hover:text-green-800">
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
+                  ) : (
+                    <div>
+                      <div className="flex gap-2">
+                        <input
+                          type="text"
+                          value={promoInput}
+                          onChange={(e) => handlePromoInputChange(e.target.value)}
+                          placeholder="Промокод"
+                          className="flex-1 px-3 py-2 border border-border rounded-lg text-sm focus:border-primary outline-none"
+                          onKeyDown={(e) => e.key === 'Enter' && handleApplyPromo()}
+                        />
+                        <button
+                          onClick={handleApplyPromo}
+                          disabled={!promoInput.trim()}
+                          className="px-4 py-2 bg-[#0066FF] text-white rounded-lg text-sm hover:bg-[#0052CC] disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
+                        >
+                          Применить
+                        </button>
+                      </div>
+                      {promoStatus === 'success' && (
+                        <p className="text-sm text-green-600 mt-2">Промокод применён</p>
+                      )}
+                      {promoStatus === 'error' && (
+                        <p className="text-sm text-red-600 mt-2">Промокод недействителен или не применим к этому заказу</p>
+                      )}
+                    </div>
+                  )}
                 </div>
+              )}
+
+              {/* Расчёт */}
+              <div className="space-y-3 pb-4 border-b border-border">
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">
+                    Товары ({nonGiftItems.reduce((s, i) => s + i.quantity, 0)})
+                  </span>
+                  <span className="font-medium">{basePrice.toLocaleString('ru-RU')} ₽</span>
+                </div>
+                {isAuthenticated && giftSavings > 0 && (
+                  <div className="flex justify-between text-green-600">
+                    <span>Подарки по акции</span>
+                    <span className="font-medium">−{giftSavings.toLocaleString('ru-RU')} ₽</span>
+                  </div>
+                )}
+                {appliedPromo && (
+                  <div className="flex justify-between text-green-600">
+                    <span>Скидка по промокоду</span>
+                    <span className="font-medium">−{promoDiscount.toLocaleString('ru-RU')} ₽</span>
+                  </div>
+                )}
               </div>
 
-              <div className="text-2xl font-semibold mb-6">
-                {totalPrice.toLocaleString('ru-RU')} ₽
+              {/* Ваша выгода */}
+              {isAuthenticated && totalSavings > 0 && (
+                <div className="flex justify-between p-3 bg-green-50 border border-green-200 rounded-lg">
+                  <span className="font-medium text-green-700">Ваша выгода</span>
+                  <span className="font-semibold text-green-700">−{totalSavings.toLocaleString('ru-RU')} ₽</span>
+                </div>
+              )}
+
+              <div className="text-2xl font-semibold">
+                {finalPrice.toLocaleString('ru-RU')} ₽
               </div>
 
               <Link
                 to="/checkout"
-                className="w-full flex items-center justify-center px-6 py-3 bg-[#0066FF] text-white rounded-lg hover:bg-[#0052CC] transition-colors mb-6"
+                className="w-full flex items-center justify-center px-6 py-3 bg-[#0066FF] text-white rounded-lg hover:bg-[#0052CC] transition-colors"
               >
                 Оформить заказ
               </Link>
 
               <div className="text-sm text-muted-foreground space-y-2">
-                <p>
-                  <strong>Доставка:</strong> от 1 дня после оформления заказа.
-                </p>
+                <p><strong>Доставка:</strong> от 1 дня после оформления заказа.</p>
                 <p className="text-xs">
                   Заказ будет передан официальному дистрибьютору Tokuyama Dental. Дистрибьютор свяжется
                   с вами для подтверждения деталей заказа, оплаты и доставки.

@@ -1,20 +1,43 @@
 import { useParams, Link } from 'react-router';
 import { products, ProductVariant } from '../data/products';
 import { useCart } from '../contexts/CartContext';
-import { Copy, FileText, ShoppingCart, ChevronLeft, Gift } from 'lucide-react';
-import { useState } from 'react';
+import { useAuth } from '../contexts/AuthContext';
+import { Copy, FileText, ShoppingCart, ChevronLeft, Gift, X, ChevronRight, ChevronLeft as ChevLeft } from 'lucide-react';
+import { useState, useEffect, useCallback } from 'react';
 import { getPromotionForProduct } from '../data/promotions';
+
+const MOCK_IMAGES = [
+  { label: 'Фото 1', bg: 'bg-blue-100' },
+  { label: 'Фото 2', bg: 'bg-indigo-100' },
+  { label: 'Фото 3', bg: 'bg-sky-100' },
+];
 
 export function ProductDetail() {
   const { id } = useParams();
   const product = products.find((p) => p.id === id);
   const { addToCart } = useCart();
+  const { isAuthenticated } = useAuth();
   const [quantity, setQuantity] = useState(1);
   const [activeTab, setActiveTab] = useState('description');
   const [copied, setCopied] = useState(false);
+  const [activeImageIndex, setActiveImageIndex] = useState(0);
+  const [lightboxOpen, setLightboxOpen] = useState(false);
 
   const [selectedVariantType, setSelectedVariantType] = useState<'kit' | 'syringe'>('kit');
   const [selectedShade, setSelectedShade] = useState<string>('');
+
+  const closeLightbox = useCallback(() => setLightboxOpen(false), []);
+
+  useEffect(() => {
+    if (!lightboxOpen) return;
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') closeLightbox();
+      if (e.key === 'ArrowRight') setActiveImageIndex(i => (i + 1) % MOCK_IMAGES.length);
+      if (e.key === 'ArrowLeft') setActiveImageIndex(i => (i - 1 + MOCK_IMAGES.length) % MOCK_IMAGES.length);
+    };
+    document.addEventListener('keydown', handler);
+    return () => document.removeEventListener('keydown', handler);
+  }, [lightboxOpen, closeLightbox]);
 
   if (!product) {
     return (
@@ -50,7 +73,7 @@ export function ProductDetail() {
   const selectedVariant = getSelectedVariant();
   const currentPrice = selectedVariant?.price || product.price;
   const currentArticle = selectedVariant?.article || product.article;
-  const promotion = product.promotionId ? getPromotionForProduct(product.id) : undefined;
+  const promotion = isAuthenticated && product.promotionId ? getPromotionForProduct(product.id) : undefined;
 
   const handleCopyArticle = () => {
     navigator.clipboard.writeText(currentArticle);
@@ -96,11 +119,34 @@ export function ProductDetail() {
 
         {/* Основная информация */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 mb-8">
-          {/* Фото */}
-          <div className="lg:col-span-4">
-            <div className="aspect-square bg-muted rounded-lg flex items-center justify-center sticky top-24">
-              <div className="text-muted-foreground">Фото товара</div>
+          {/* Фото + карусель */}
+          <div className="lg:col-span-4 sticky top-24">
+            {/* Основное фото */}
+            <div
+              className={`aspect-square ${MOCK_IMAGES[activeImageIndex].bg} rounded-lg flex items-center justify-center cursor-zoom-in mb-3`}
+              onClick={() => setLightboxOpen(true)}
+            >
+              <div className="text-muted-foreground">{MOCK_IMAGES[activeImageIndex].label}</div>
             </div>
+
+            {/* Миниатюры */}
+            {MOCK_IMAGES.length > 1 && (
+              <div className="flex gap-2">
+                {MOCK_IMAGES.map((img, idx) => (
+                  <button
+                    key={idx}
+                    onClick={() => setActiveImageIndex(idx)}
+                    className={`w-16 h-16 rounded-lg border-2 flex items-center justify-center text-xs transition-colors ${img.bg} ${
+                      activeImageIndex === idx
+                        ? 'border-[#0066FF]'
+                        : 'border-transparent hover:border-gray-300'
+                    }`}
+                  >
+                    {idx + 1}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Информация */}
@@ -296,6 +342,52 @@ export function ProductDetail() {
             </div>
           </div>
         </div>
+
+        {/* Лайтбокс */}
+        {lightboxOpen && (
+          <div
+            className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4"
+            onClick={closeLightbox}
+          >
+            <button
+              onClick={closeLightbox}
+              className="absolute top-4 right-4 text-white hover:text-gray-300"
+            >
+              <X className="w-8 h-8" />
+            </button>
+
+            <button
+              onClick={(e) => { e.stopPropagation(); setActiveImageIndex(i => (i - 1 + MOCK_IMAGES.length) % MOCK_IMAGES.length); }}
+              className="absolute left-4 text-white hover:text-gray-300"
+            >
+              <ChevLeft className="w-8 h-8" />
+            </button>
+
+            <div
+              className={`w-full max-w-2xl aspect-square ${MOCK_IMAGES[activeImageIndex].bg} rounded-lg flex items-center justify-center`}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="text-2xl text-muted-foreground">{MOCK_IMAGES[activeImageIndex].label}</div>
+            </div>
+
+            <button
+              onClick={(e) => { e.stopPropagation(); setActiveImageIndex(i => (i + 1) % MOCK_IMAGES.length); }}
+              className="absolute right-4 text-white hover:text-gray-300"
+            >
+              <ChevronRight className="w-8 h-8" />
+            </button>
+
+            <div className="absolute bottom-4 flex gap-2">
+              {MOCK_IMAGES.map((_, idx) => (
+                <button
+                  key={idx}
+                  onClick={(e) => { e.stopPropagation(); setActiveImageIndex(idx); }}
+                  className={`w-2.5 h-2.5 rounded-full transition-colors ${activeImageIndex === idx ? 'bg-white' : 'bg-white/40'}`}
+                />
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Вкладки */}
         <div className="border-t border-border">

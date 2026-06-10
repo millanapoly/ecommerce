@@ -7,7 +7,7 @@ import { ShoppingBag, Plus, Gift, LogIn, UserPlus } from 'lucide-react';
 
 export function Checkout() {
   const navigate = useNavigate();
-  const { items, getTotalPrice, clearCart } = useCart();
+  const { items, getTotalPrice, clearCart, appliedPromo, getPromoDiscount } = useCart();
   const { user, isAuthenticated, addAddress } = useAuth();
 
   const defaultAddress = user?.savedAddresses.find(a => a.isDefault);
@@ -30,8 +30,6 @@ export function Checkout() {
     deliveryMethod: 'delivery',
     paymentMethod: 'prepayment',
     orderComment: '',
-    agreePersonalData: false,
-    agreeContactData: false,
     saveNewAddress: false
   });
 
@@ -128,11 +126,6 @@ export function Checkout() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!formData.agreePersonalData || !formData.agreeContactData) {
-      alert('Необходимо согласиться с условиями');
-      return;
-    }
-
     // Сохранить новый адрес если выбрана опция
     if (selectedAddressId === 'new' && formData.saveNewAddress) {
       addAddress({
@@ -153,7 +146,7 @@ export function Checkout() {
         isGift,
         relatedPromoId
       })),
-      total: getTotalPrice(),
+      total: getTotalPrice() - getPromoDiscount(),
       contactPerson: {
         fullName: formData.fullName,
         phone: formData.phone,
@@ -185,6 +178,49 @@ export function Checkout() {
         <h1 className="text-3xl font-semibold mb-8">Оформление заказа</h1>
 
         <form onSubmit={handleSubmit} className="space-y-8">
+          {/* Ваш заказ */}
+          <div className="bg-white border border-border rounded-lg p-6">
+            <h2 className="text-xl font-semibold mb-6">Ваш заказ</h2>
+
+            <div className="space-y-4 mb-6 pb-6 border-b border-border">
+              {items.map((item) => {
+                const { product, quantity, isGift } = item;
+
+                return (
+                  <div key={product.id} className="flex justify-between">
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium">{product.name}</span>
+                        {isGift && (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-green-100 text-green-700 text-xs font-medium rounded">
+                            <Gift className="w-3 h-3" />
+                            Подарок
+                          </span>
+                        )}
+                      </div>
+                      <div className="text-sm text-muted-foreground">Количество: {quantity}</div>
+                    </div>
+                    <div className="font-medium">
+                      {(product.price * quantity).toLocaleString('ru-RU')} ₽
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            <div className="space-y-2">
+              {appliedPromo && (
+                <div className="flex justify-between text-green-600">
+                  <span>Скидка по промокоду ({appliedPromo.code} −{appliedPromo.label})</span>
+                  <span className="font-medium">−{getPromoDiscount().toLocaleString('ru-RU')} ₽</span>
+                </div>
+              )}
+              <div className="text-2xl font-semibold">
+                Итого: {(getTotalPrice() - getPromoDiscount()).toLocaleString('ru-RU')} ₽
+              </div>
+            </div>
+          </div>
+
           {/* Контактное лицо */}
           <div className="bg-white border border-border rounded-lg p-6">
             <h2 className="text-xl font-semibold mb-6">Контактное лицо</h2>
@@ -489,72 +525,16 @@ export function Checkout() {
             />
           </div>
 
-          {/* Подтверждение */}
-          <div className="bg-white border border-border rounded-lg p-6">
-            <h2 className="text-xl font-semibold mb-6">Подтверждение заказа</h2>
-
-            <div className="space-y-4 mb-6 pb-6 border-b border-border">
-              {items.map((item) => {
-                const { product, quantity, isGift } = item;
-
-                return (
-                  <div key={product.id} className="flex justify-between">
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <span className="font-medium">{product.name}</span>
-                        {isGift && (
-                          <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-green-100 text-green-700 text-xs font-medium rounded">
-                            <Gift className="w-3 h-3" />
-                            Подарок
-                          </span>
-                        )}
-                      </div>
-                      <div className="text-sm text-muted-foreground">Количество: {quantity}</div>
-                    </div>
-                    <div className="font-medium">
-                      {(product.price * quantity).toLocaleString('ru-RU')} ₽
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-
-            <div className="text-2xl font-semibold mb-6">
-              Итого: {getTotalPrice().toLocaleString('ru-RU')} ₽
-            </div>
-
-            <div className="space-y-3 mb-6">
-              <label className="flex items-start gap-3 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={formData.agreePersonalData}
-                  onChange={(e) => updateField('agreePersonalData', e.target.checked)}
-                  className="mt-1"
-                  required
-                />
-                <span className="text-sm">Согласен на обработку персональных данных</span>
-              </label>
-              <label className="flex items-start gap-3 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={formData.agreeContactData}
-                  onChange={(e) => updateField('agreeContactData', e.target.checked)}
-                  className="mt-1"
-                  required
-                />
-                <span className="text-sm">
-                  Подтверждаю корректность контактных данных и адреса доставки
-                </span>
-              </label>
-            </div>
-
-            <button
-              type="submit"
-              className="w-full px-8 py-3 bg-[#0066FF] text-white rounded-lg hover:bg-[#0052CC] transition-colors"
-            >
-              Подтвердить заказ
-            </button>
-          </div>
+          {/* Кнопка подтверждения */}
+          <button
+            type="submit"
+            className="w-full px-8 py-3 bg-[#0066FF] text-white rounded-lg hover:bg-[#0052CC] transition-colors"
+          >
+            Подтвердить заказ
+          </button>
+          <p className="text-sm text-muted-foreground text-center">
+            Заказ будет передан официальному дистрибьютору. Финальные условия доставки и оплаты подтвердятся после связи с ним.
+          </p>
         </form>
       </div>
     </div>
